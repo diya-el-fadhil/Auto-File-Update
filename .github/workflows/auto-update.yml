@@ -1,31 +1,29 @@
-name: Auto-Update File and Push
+name: Update File with API Data
 
-# Trigger the workflow on a schedule (every hour)
 on:
   schedule:
-    - cron: '0 * * * *'  # Every hour
-  workflow_dispatch:  # Allows manual run from GitHub Actions tab
+    - cron: '0 0 * * *'  # Runs daily at midnight
 
 jobs:
   update-file:
-    runs-on: ubuntu-latest  # Use the latest Ubuntu environment
+    runs-on: ubuntu-latest
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
 
-    - name: Modify the file
+    - name: Get data from API and modify file
       run: |
-        echo "Auto-updated at $(date)" >> file.txt  # Appends date to file.txt
+        curl -s https://api.coindesk.com/v1/bpi/currentprice.json | jq '.bpi.USD.rate' > bitcoin-price.txt
 
     - name: Commit changes
       run: |
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
-        git add file.txt
-        git commit -m "Automated update by GitHub Actions at $(date)"
+        git add bitcoin-price.txt
+        git commit -m "Updated bitcoin price at $(date)"
 
-- name: Push changes
-  uses: ad-m/github-push-action@v0.6.0
-  with:
-    github_token: ${{ secrets.GITHUB_TOKEN }}
+    - name: Push changes
+      uses: ad-m/github-push-action@v0.6.0
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
