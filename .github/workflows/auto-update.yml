@@ -1,26 +1,68 @@
-name: Auto File Update
+name: Auto Update HTML File
 
 on:
-  workflow_dispatch:  # This enables manual triggering
+  schedule:
+    # Run every hour on Sundays
+    - cron: '0 * * * 0'  # This will run every hour on Sunday
+    # Run once daily at midnight from Monday to Saturday
+    - cron: '0 0 * * 1-6'  # This will run once a day at midnight from Monday to Saturday
 
 jobs:
-  update-file:
+  update-html:
     runs-on: ubuntu-latest
+
     steps:
+      # Step 1: Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Make file updates
-        run: echo "Auto-updating file" >> updated_file.txt
+      # Step 2: Determine the day of the month
+      - name: Check the day of the month
+        id: check_day
+        run: |
+          DAY_OF_MONTH=$(date +'%d')
+          DAY_OF_WEEK=$(date +'%u')  # 1=Monday, 7=Sunday
+          echo "Day of the month: $DAY_OF_MONTH"
+          echo "Day of the week: $DAY_OF_WEEK"
+          echo "::set-output name=day::$DAY_OF_MONTH"
+          echo "::set-output name=week::$DAY_OF_WEEK"
 
+      # Step 3: Update HTML file
+      - name: Update HTML file
+        id: update_html
+        run: |
+          DAY=${{ steps.check_day.outputs.day }}
+          WEEK=${{ steps.check_day.outputs.week }}
+          FILE="index.html"  # Replace with your HTML file name
+
+          # Determine how many times to update based on the day
+          if [ "$WEEK" -eq 7 ]; then  # Sunday
+            NUM_UPDATES=1  # Update every hour, so only need to append once per hour
+            echo "<!-- Update on Sunday at $(date +'%H:%M') -->" >> $FILE
+          else
+            if (( DAY % 2 == 0 )); then
+              NUM_UPDATES=2
+            else
+              NUM_UPDATES=4
+            fi
+
+            for i in $(seq 1 $NUM_UPDATES); do
+              echo "<!-- Update $i on day $DAY -->" >> $FILE
+              echo "Updated $FILE on day $DAY"
+            done
+          fi
+
+      # Step 4: Commit changes if the file was updated
       - name: Commit changes
         run: |
           git config --global user.name "GitHub Actions Bot"
           git config --global user.email "actions@github.com"
-          git add updated_file.txt
-          git commit -m "Automated file update"
-
-      - name: Push changes
-        uses: ad-m/github-push-action@v0.6.0
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          git add index.html  # Replace with your HTML file name
+          
+          # Check if there are changes to commit
+          if ! git diff-index --quiet HEAD --; then
+            git commit -m "Automated HTML file updates on day ${{ steps.check_day.outputs.day }}"
+            git push
+          else
+            echo "No changes to commit."
+          fi
