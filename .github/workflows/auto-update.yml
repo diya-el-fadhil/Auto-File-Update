@@ -1,0 +1,31 @@
+name: Auto-Update File and Push
+
+# Trigger the workflow on a schedule (every hour)
+on:
+  schedule:
+    - cron: '0 * * * *'  # Every hour
+  workflow_dispatch:  # Allows manual run from GitHub Actions tab
+
+jobs:
+  update-file:
+    runs-on: ubuntu-latest  # Use the latest Ubuntu environment
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Modify the file
+      run: |
+        echo "Auto-updated at $(date)" >> file.txt  # Appends date to file.txt
+
+    - name: Commit changes
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git add file.txt
+        git commit -m "Automated update by GitHub Actions at $(date)"
+
+    - name: Push changes
+      uses: ad-m/github-push-action@v0.6.0
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}  # Uses GitHub token to push changes
