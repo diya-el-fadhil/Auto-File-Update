@@ -21,14 +21,21 @@ jobs:
           
           # Check if the HTML file exists
           if [ -f "$FILE" ]; then
-            # Get the last letter added (if any) and calculate the next letter
+            # Read the last character and determine the next letter
             LAST_LETTER=$(tail -c 1 "$FILE")
+            echo "Last letter in the file: '$LAST_LETTER'"
+            
             if [[ -z "$LAST_LETTER" ]]; then
               # If the file is empty, start with 'A'
               NEXT_LETTER="A"
             else
-              # Calculate the next letter (assuming ASCII values)
-              NEXT_LETTER=$(printf "\\$(printf '%03o' "$(( $(printf '%d' "'$LAST_LETTER") + 1 ))")")
+              # Calculate the next letter (assuming uppercase letters only)
+              if [[ "$LAST_LETTER" == "Z" ]]; then
+                echo "Reached 'Z', resetting to 'A'."
+                NEXT_LETTER="A"  # Reset to 'A' after 'Z'
+              else
+                NEXT_LETTER=$(printf "\\$(printf '%03o' "$(( $(printf '%d' "'$LAST_LETTER") + 1 ))")")
+              fi
             fi
             
             # Append the next letter to the HTML file
@@ -36,6 +43,7 @@ jobs:
             echo "Appended letter '$NEXT_LETTER' to $FILE"
           else
             echo "File $FILE does not exist."
+            exit 1  # Exit with error if file does not exist
           fi
 
       # Step 3: Commit changes if the file was updated
