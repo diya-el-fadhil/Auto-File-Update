@@ -1,9 +1,9 @@
-name: Auto Update HTML File Every Minute
+name: Auto Update HTML File Every 7 Hours
 
 on:
   schedule:
-    # Run every minute
-    - cron: '* * * * *'
+    # Run every 7 hours
+    - cron: '0 */7 * * *'
 
 jobs:
   update-html:
