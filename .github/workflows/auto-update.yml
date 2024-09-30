@@ -25,7 +25,7 @@ jobs:
         git add file.txt
         git commit -m "Automated update by GitHub Actions at $(date)"
 
-    - name: Push changes
-      uses: ad-m/github-push-action@v0.6.0
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}  # Uses GitHub token to push changes
+- name: Push changes
+  uses: ad-m/github-push-action@v0.6.0
+  with:
+    github_token: ${{ secrets.GITHUB_TOKEN }}
